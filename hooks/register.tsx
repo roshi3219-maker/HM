@@ -1,7 +1,10 @@
 import { atom, read, update } from 'claude-code'
-import type { Register, SessionRateLimit } from 'claude-code'
+import type { Register, SessionMeasureInput, SessionRateLimit } from 'claude-code'
+
+import type { UsageSnapshot } from '../types'
 
 const PANE = 'usage-footer'
+const snapshot = atom({ plugin: 'usage-footer', key: 'snapshot' } as const, null)
 const line = atom({ plugin: 'usage-footer', key: 'text' } as const, null)
 
 const labels: Record<string, string> = {
@@ -11,6 +14,12 @@ const labels: Record<string, string> = {
 }
 
 const left = (percentUsed: number) => Math.max(0, Math.round(100 - percentUsed))
+
+export const bar = (percentUsed: number, width = 12): string => {
+  const used = Math.min(width, Math.max(0, Math.round((percentUsed / 100) * width)))
+
+  return '█'.repeat(used) + '░'.repeat(width - used)
+}
 
 export const format = (
   rateLimits: SessionRateLimit[],
@@ -25,6 +34,25 @@ export const format = (
   }
 
   return parts.length > 0 ? parts.join(' · ') : undefined
+}
+
+const take = (e: Pick<SessionMeasureInput, 'rateLimits' | 'context' | 'cost'>): UsageSnapshot => ({
+  limits: e.rateLimits.map(r => ({
+    label: labels[r.kind] ?? r.kind,
+    percentUsed: r.percentUsed
+  })),
+  contextPercentUsed: e.context.percent ?? null,
+  costUsd: e.cost?.usd ?? null
+})
+
+const rows = (s: UsageSnapshot) => {
+  const out = s.limits.map(l => ({ label: l.label, used: l.percentUsed }))
+
+  if (s.contextPercentUsed !== null) {
+    out.push({ label: 'context', used: s.contextPercentUsed })
+  }
+
+  return out
 }
 
 export const register: Register = on => {
@@ -59,9 +87,9 @@ export const register: Register = on => {
   on('session.measure', async ($, e, next) => {
     const text = format(e.rateLimits, e.context.percent)
     const cost = e.cost ? ` · $${e.cost.usd.toFixed(2)} spent` : ''
-    const full = `${text ?? 'usage: no rate-limit data'}${cost}`
 
-    await update($, line, () => full)
+    await update($, snapshot, () => take(e))
+    await update($, line, () => `${text ?? 'usage: no rate-limit data'}${cost}`)
 
     return next(e)
   })
@@ -73,6 +101,33 @@ export const register: Register = on => {
     return (
       <Box>
         <Text>{text ?? 'waiting for the first measurement…'}</Text>
+      </Box>
+    )
+  })
+
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    const snap = await read($, snapshot)
+
+    if (e.props.hasSurvey || snap === null) {
+      return next(e)
+    }
+
+    const { Box, Text } = $.ui.resolve(e)
+    const list = rows(snap)
+
+    return (
+      <Box flexDirection="column">
+        {list.map(r => (
+          <Text key={r.label} dimColor>
+            {r.label.padEnd(7)} {bar(r.used)} {left(r.used)}% left
+          </Text>
+        ))}
+        <Text dimColor>
+          {snap.costUsd === null
+            ? 'cost: n/a'
+            : `used $${snap.costUsd.toFixed(2)} this session`}
+          {list.length === 0 ? ' · no rate-limit data' : ''}
+        </Text>
       </Box>
     )
   })

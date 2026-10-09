@@ -10,7 +10,7 @@ A Claude Code mod that shows your remaining usage in a pane: the 5-hour and 7-da
 
 ## Use
 
-- The `Usage` pane opens by itself when the session starts. Its position is chosen by the app.
+- A bar graph of each limit sits above the prompt, with the session cost. The `Usage` pane shows one text line and opens by itself at session start.
 - `/pane` opens it again after you close it.
 - `/remaining` prints the current figures as text.
 

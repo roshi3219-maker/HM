@@ -95,12 +95,32 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const text = await read($, line)
+    const snap = await read($, snapshot)
     const { Box, Text } = $.ui.resolve(e)
 
+    if (snap === null) {
+      return (
+        <Box>
+          <Text dimColor>waiting for the first measurement…</Text>
+        </Box>
+      )
+    }
+
+    const list = rows(snap)
+
     return (
-      <Box>
-        <Text>{text ?? 'waiting for the first measurement…'}</Text>
+      <Box flexDirection="column">
+        {list.map(r => (
+          <Text key={r.label}>
+            {r.label.padEnd(7)} {bar(r.used)} {left(r.used)}% left
+          </Text>
+        ))}
+        <Text dimColor>
+          {snap.costUsd === null
+            ? 'cost: n/a'
+            : `used $${snap.costUsd.toFixed(2)} this session`}
+          {list.length === 0 ? ' · no rate-limit data' : ''}
+        </Text>
       </Box>
     )
   })

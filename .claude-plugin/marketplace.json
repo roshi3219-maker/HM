@@ -1,0 +1,5 @@
+{
+  "name": "hm",
+  "owner": { "name": "roshi3219-maker" },
+  "plugins": [{ "name": "usage-footer", "source": "./" }]
+}

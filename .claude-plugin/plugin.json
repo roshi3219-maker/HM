@@ -1,0 +1,1 @@
+{ "name": "usage-footer", "version": "0.1.0", "description": "Shows remaining usage (rate limits and context) in the status line at the bottom", "types": "./types/index.d.ts" }

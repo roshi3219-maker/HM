@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { bar, format } from './register'
+import { bar, format, shade, split } from './register'
 
 test('formats remaining usage', () => {
   expect(
@@ -12,4 +12,11 @@ test('draws a bar of used usage', () => {
   expect(bar(0, 10)).toBe('░░░░░░░░░░')
   expect(bar(50, 10)).toBe('█████░░░░░')
   expect(bar(150, 10)).toBe('██████████')
+})
+
+test('colours by how much is used', () => {
+  expect(shade(10)).toBe('success')
+  expect(shade(70)).toBe('warning')
+  expect(shade(95)).toBe('error')
+  expect(split(25, 12)).toEqual([3, 9])
 })

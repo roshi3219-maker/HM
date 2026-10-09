@@ -21,6 +21,15 @@ export const bar = (percentUsed: number, width = 12): string => {
   return '█'.repeat(used) + '░'.repeat(width - used)
 }
 
+export const shade = (percentUsed: number): 'success' | 'warning' | 'error' =>
+  percentUsed >= 90 ? 'error' : percentUsed >= 70 ? 'warning' : 'success'
+
+export const split = (percentUsed: number, width = 12): [number, number] => {
+  const used = Math.min(width, Math.max(0, Math.round((percentUsed / 100) * width)))
+
+  return [used, width - used]
+}
+
 export const format = (
   rateLimits: SessionRateLimit[],
   contextPercent?: number
@@ -110,11 +119,18 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="column">
-        {list.map(r => (
-          <Text key={r.label}>
-            {r.label.padEnd(7)} {bar(r.used)} {left(r.used)}% left
-          </Text>
-        ))}
+        {list.map(r => {
+          const [filled, empty] = split(r.used)
+
+          return (
+            <Box key={r.label}>
+              <Text>{r.label.padEnd(8)}</Text>
+              <Text color={shade(r.used)}>{'█'.repeat(filled)}</Text>
+              <Text dimColor>{'░'.repeat(empty)}</Text>
+              <Text> {left(r.used)}% left</Text>
+            </Box>
+          )
+        })}
         <Text dimColor>
           {snap.costUsd === null
             ? 'cost: n/a'
@@ -137,11 +153,18 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="column">
-        {list.map(r => (
-          <Text key={r.label} dimColor>
-            {r.label.padEnd(7)} {bar(r.used)} {left(r.used)}% left
-          </Text>
-        ))}
+        {list.map(r => {
+          const [filled, empty] = split(r.used)
+
+          return (
+            <Box key={r.label}>
+              <Text dimColor>{r.label.padEnd(8)}</Text>
+              <Text color={shade(r.used)}>{'█'.repeat(filled)}</Text>
+              <Text dimColor>{'░'.repeat(empty)}</Text>
+              <Text dimColor> {left(r.used)}% left</Text>
+            </Box>
+          )
+        })}
         <Text dimColor>
           {snap.costUsd === null
             ? 'cost: n/a'

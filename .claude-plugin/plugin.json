@@ -1,1 +1,1 @@
-{ "name": "usage-footer", "version": "0.1.0", "description": "Shows remaining usage (rate limits and context) in the status line at the bottom", "types": "./types/index.d.ts" }
+{ "name": "usage-footer", "version": "0.1.0", "description": "入力欄の上に、使用量と残りを棒グラフで常時表示します（5時間枠・7日枠・コンテキスト・セッション費用）", "types": "./types/index.d.ts" }
